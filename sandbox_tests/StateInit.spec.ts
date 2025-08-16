@@ -42,7 +42,7 @@ describe('State init tests', () => {
                    JettonMinter.createFromConfig(
                      {
                        admin: deployer.address,
-                       wallet_code: jwallet_code,
+                       wallet_code: jwallet_code_raw,
                        jetton_content: jettonContentToCell({uri: "https://ton.org/"})
                      },
                      minter_code));
@@ -77,11 +77,11 @@ describe('State init tests', () => {
         let res = await jettonMinter.sendMint(deployer.getSender(),
                                                 deployer.address,
                                                 maxValue,
-                                                null, deployer.address, null);
+                                                null, deployer.address, null, 0n, toNano('1'));
         const transferTx = findTransactionRequired(res.transactions,{
             on: deployerWallet.address,
             op: Op.internal_transfer,
-            initCode: jwallet_code,
+            initCode: jwallet_code_raw,
             success: true,
         });
 
