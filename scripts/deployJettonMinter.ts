@@ -17,10 +17,7 @@ export async function run(provider: NetworkProvider) {
     * // Updatable and pausable wallet code
     *"Asm.fif" include
     *<{
-    *  DUP ISZERO
-    *  5 PUSHINT // if method_id is recv_internal, copy 5 stack elements
-    *  1 PUSHINT // Else copy just method_id. Limited to get_methods with 0 arguments
-    *  CONDSEL
+    *  DEPTH // Push number of elements on stack
     *  c4 PUSH
     *  c5 PUSH
     *  c7 PUSH
@@ -42,13 +39,13 @@ export async function run(provider: NetworkProvider) {
     *    // Return false, so THROWIF won't throw
     *    0 PUSHINT
     *	}>CONT
-    *	
+    *
     *   c7 SETCONT
     *   c5 SETCONT
     *   c4 SETCONT
-    *   SWAP
+    *   SWAP // Get stack depth to the top
     *   -1 PUSHINT
-    *   SETCONTVARARGS
+    *   SETCONTVARARGS // Copy arguments to continuation
     *<{ 40849517356361055192946520621652234430928522388750971481005990576651272944379 PUSHINT // PAUSE_HASH
     *      2 PUSHINT // store_uint lib prefix
     *      NEWC // Start building cell
@@ -67,7 +64,7 @@ export async function run(provider: NetworkProvider) {
     * }>c
     */
 
-    const jettonWalletCode = Cell.fromBase64("te6cckEBAQEAcQAA3iDAAHVx4wTtRO1F7UeOHFtyyMsHgfwA+DIw0IEBANcDAcv/cc8j0O0e2HDtZ+1l7WQBf+0Rji6C8FpQAepO6shFRNLzyB2LzFSc4tPO98yF4vToUK84f3r7csjLB8v/cc8j0DBx7UHt8QHy//LT6LCiPQ0=");
+    const jettonWalletCode = Cell.fromBase64("te6cckEBAQEAawAA0mjtRO1F7UeOHFtyyMsHgfwA+DIw0IEBANcDAcv/cc8j0O0e2HDtZ+1l7WQBf+0Rji6C8FpQAepO6shFRNLzyB2LzFSc4tPO98yF4vToUK84f3r7csjLB8v/cc8j0DBx7UHt8QHy//LT6EmPirY=");
 
 
     const minter = provider.open(JettonMinter.createFromConfig({

@@ -1,10 +1,7 @@
 // Updatable and pausable wallet code
 "Asm.fif" include
 <{
-  DUP ISZERO
-  5 PUSHINT // if method_id is recv_internal, copy 5 stack elements
-  1 PUSHINT // Else copy just method_id. Limited to get_methods with 0 arguments
-  CONDSEL
+  DEPTH // Current number of arguments to be copied to the catch continuation
   c4 PUSH
   c5 PUSH
   c7 PUSH
@@ -30,9 +27,9 @@
    c7 SETCONT
    c5 SETCONT
    c4 SETCONT
-   SWAP
+   SWAP // Take initial stack depth to the top
    -1 PUSHINT
-   SETCONTVARARGS
+   SETCONTVARARGS // save stack to the continuation
 <{ 40849517356361055192946520621652234430928522388750971481005990576651272944379 PUSHINT // PAUSE_HASH
       2 PUSHINT // store_uint lib prefix
       NEWC // Start building cell

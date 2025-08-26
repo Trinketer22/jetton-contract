@@ -279,7 +279,7 @@ export async function run(provider: NetworkProvider) {
     const sender = provider.sender();
     const hasSender = sender.address !== undefined;
     minterCode = await compile('JettonMinter');
-    walletCode = Cell.fromBase64("te6cckEBAQEAcQAA3iDAAHVx4wTtRO1F7UeOHFtyyMsHgfwA+DIw0IEBANcDAcv/cc8j0O0e2HDtZ+1l7WQBf+0Rji6C8FpQAepO6shFRNLzyB2LzFSc4tPO98yF4vToUK84f3r7csjLB8v/cc8j0DBx7UHt8QHy//LT6LCiPQ0=");
+    walletCode = Cell.fromBase64("te6cckEBAQEAawAA0mjtRO1F7UeOHFtyyMsHgfwA+DIw0IEBANcDAcv/cc8j0O0e2HDtZ+1l7WQBf+0Rji6C8FpQAepO6shFRNLzyB2LzFSc4tPO98yF4vToUK84f3r7csjLB8v/cc8j0DBx7UHt8QHy//LT6EmPirY=");
     let   done = false;
     let   retry:boolean;
     let   minterAddress:Address;
