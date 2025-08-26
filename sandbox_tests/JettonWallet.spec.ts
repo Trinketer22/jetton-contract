@@ -97,26 +97,62 @@ describe('JettonWallet', () => {
         confDict.set(-1024, beginCell().storeBuffer(jwallet_code_raw.hash(), 32).endCell());
         blockchain.setConfig(beginCell().storeDictDirect(confDict).endCell());
         // jwallet_code = new Cell({ exotic:true, bits: lib_prep.bits, refs:lib_prep.refs});
-
         /*
-        * Updatable wallet code
+        * // Updatable and pausable wallet code
+        *"Asm.fif" include
         *<{
-        * 2 PUSHINT
-        * NEWC // constructor of library cell
-        * 8 STU // store 02 as library identifier to library cell constructor
-        * -1024 PUSHINT CONFIGPARAM // X - is special index that is reserved for jetton code
-        * DROP // Drop the status
-        * CTOS // conver param to slice
-        * 256 PUSHINT PLDUX SWAP // load 256 hash of the library
-        * 256 STU // store hash to library cell constructor
-        * 1 PUSHINT ENDXC // finalize library cell
-        * CTOS // open cell (it transparently replaced with actual code loaded via library mechanism)
-        * BLESS // convert slice to continuation (executable code)
-        * EXECUTE // start to execute
-        *}>c
+        *  DUP ISZERO
+        *  5 PUSHINT // if method_id is recv_internal, copy 5 stack elements
+        *  1 PUSHINT // Else copy just method_id. Limited to get_methods with 0 arguments
+        *  CONDSEL
+        *  c4 PUSH
+        *  c5 PUSH
+        *  c7 PUSH
+        *  // Fift stub
+        *	<{
+        *    2DROP // Clear catch args
+        *    2 PUSHINT
+        *    NEWC // constructor of library cell
+        *    8 STU // store 02 as library identifier to library cell constructor
+        *    -1024 PUSHINT CONFIGPARAM // X - is special index that is reserved for jetton code
+        *    DROP // Drop the status
+        *    CTOS // conver param to slice
+        *    256 PUSHINT PLDUX SWAP // load 256 hash of the library
+        *    256 STU // store hash to library cell constructor
+        *    1 PUSHINT ENDXC // finalize library cell
+        *    CTOS // open cell (it transparently replaced with actual code loaded via library mechanism)
+        *    BLESS // convert slice to continuation (executable code)
+        *    EXECUTE // start to execute
+        *    // Return false, so THROWIF won't throw
+        *    0 PUSHINT
+        *	}>CONT
+        *	
+        *   c7 SETCONT
+        *   c5 SETCONT
+        *   c4 SETCONT
+        *   SWAP
+        *   -1 PUSHINT
+        *   SETCONTVARARGS
+        *<{ 40849517356361055192946520621652234430928522388750971481005990576651272944379 PUSHINT // PAUSE_HASH
+        *      2 PUSHINT // store_uint lib prefix
+        *      NEWC // Start building cell
+        *      8 STU // lib prefix size
+        *      256 STU // Storing the hash
+        *      1 PUSHINT ENDXC // Close exotic
+        *      CTOS // Open should throw 9 in tot present
+        *      DROP // Drop slice
+        *      1 PUSHINT // Return true
+        *    }>CONT
+        *    c1 PUSH
+        *    COMPOSALT
+        *    SWAP
+        *    TRY
+        *    1000 THROWIF // Will throw if catch is not called
+        * }>c
         */
 
-        jwallet_code = Cell.fromBase64("te6cckEBAQEAHAAANHLIyweB/AD4MjDQgQEA1wMBy/9xzyPQ7R7YMIboiA==");
+
+        jwallet_code = Cell.fromBase64("te6cckEBAQEAcQAA3iDAAHVx4wTtRO1F7UeOHFtyyMsHgfwA+DIw0IEBANcDAcv/cc8j0O0e2HDtZ+1l7WQBf+0Rji6C8FpQAepO6shFRNLzyB2LzFSc4tPO98yF4vToUK84f3r7csjLB8v/cc8j0DBx7UHt8QHy//LT6LCiPQ0=");
         console.log("Code stats:", collectCellStats(jwallet_code, [], false));
 
         console.log('jetton minter code hash = ', minter_code.hash().toString('hex'));
@@ -1081,6 +1117,53 @@ describe('JettonWallet', () => {
                 });
               expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance);
               expect(await jettonMinter.getTotalSupply()).toEqual(initialTotalSupply);
+    });
+    it('jetton wallet should be pausable if pause lib is present', async () => {
+        let pauseCell = beginCell().storeBuffer(await sha256("42")).endCell();
+        const libsBefore = blockchain.libs!;
+        const newLibs = Dictionary.loadDirect(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell(), libsBefore);
+        newLibs.set(BigInt(`0x${pauseCell.hash().toString('hex')}`), pauseCell);
+
+
+        try {
+            blockchain.libs = beginCell().storeDictDirect(newLibs).endCell();
+
+            const deployerWallet = await userWallet(deployer.address);
+            const notDeployerWallet = await userWallet(notDeployer.address);
+
+            for(let testWallet of [deployerWallet, notDeployerWallet]) {
+                const testSender = testWallet === deployerWallet ? deployer.getSender() : notDeployer.getSender();
+                let res = await testWallet.sendTransfer(testSender,
+                                                        toNano('1'),
+                                                        1n,
+                                                        randomAddress(0),
+                                                        testSender.address,
+                                                        null, 1n);
+
+                expect(res.transactions).toHaveTransaction({
+                    on: testWallet.address,
+                    op: Op.transfer,
+                    aborted: true,
+                    exitCode: 1000
+                });
+
+                res = await testWallet.sendBurn(testSender,
+                                                toNano('1'),
+                                                1n,
+                                                testSender.address, null);
+
+                expect(res.transactions).toHaveTransaction({
+                    on: testWallet.address,
+                    op: Op.burn,
+                    aborted: true,
+                    exitCode: 1000
+                });
+
+            }
+        }
+        finally {
+            blockchain.libs = libsBefore;
+        }
     });
 
     it('wallet owner can not burn more jettons than it has', async () => {
