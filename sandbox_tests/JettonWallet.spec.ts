@@ -76,12 +76,12 @@ describe('JettonWallet', () => {
         blockchain.now = Math.floor(Date.now() / 1000);
         deployer       = await blockchain.treasury('deployer');
         notDeployer    = await blockchain.treasury('notDeployer');
-        walletStats    = new StorageStats(1657, 3);
+        walletStats    = new StorageStats(1697, 3);
         msgPrices      = getMsgPrices(blockchain.config, 0);
         gasPrices      = getGasPrices(blockchain.config, 0);
         storagePrices  = getStoragePrices(blockchain.config);
         storageDuration= 5 * 365 * 24 * 3600;
-        stateInitStats = new StorageStats(1555, 3);
+        stateInitStats = new StorageStats(1595, 3);
         defaultContent = {
                            uri: 'https://some_stablecoin.org/meta.json'
                        };
@@ -810,7 +810,7 @@ describe('JettonWallet', () => {
             success: true
         });
         send_gas_fee = printTxGasStats("Jetton transfer", transferTx);
-        let mockGas  = computeGasFee(gasPrices, 11750n);
+        let mockGas  = computeGasFee(gasPrices, 11804n);
         expect(mockGas).toBeGreaterThanOrEqual(send_gas_fee);
         send_gas_fee = mockGas;
 
@@ -821,7 +821,7 @@ describe('JettonWallet', () => {
             success: true
         });
         receive_gas_fee = printTxGasStats("Receive jetton", receiveTx);
-        mockGas   = computeGasFee(gasPrices, 12956n);
+        mockGas   = computeGasFee(gasPrices, 13010n);
         expect(mockGas).toBeGreaterThanOrEqual(receive_gas_fee);
         receive_gas_fee = mockGas;
 
@@ -1094,7 +1094,7 @@ describe('JettonWallet', () => {
 
             const actualSent   = printTxGasStats("Burn transaction", sendResult.transactions[1]);
             const actualRecv   = printTxGasStats("Burn notification transaction", sendResult.transactions[2]);
-            burn_gas_fee = computeGasFee(gasPrices, 8524n);
+            burn_gas_fee = computeGasFee(gasPrices, 8578n);
             burn_notification_fee = computeGasFee(gasPrices, 6757n);
             expect(burn_gas_fee).toBeGreaterThanOrEqual(actualSent);
             expect(burn_notification_fee).toBeGreaterThanOrEqual(actualRecv);
