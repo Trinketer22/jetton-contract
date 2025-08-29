@@ -9,6 +9,7 @@ import { randomAddress, getRandomTon, differentAddress, getRandomInt } from './u
 import { Op, Errors } from '../wrappers/JettonConstants';
 import { calcStorageFee, collectCellStats, computeFwdFees, computeFwdFeesVerbose, FullFees, GasPrices, getGasPrices, getMsgPrices, getStoragePrices, computedGeneric, storageGeneric, MsgPrices, setGasPrice, setMsgPrices, setStoragePrices, StorageStats, StorageValue, computeGasFee } from '../gasUtils';
 import { sha256 } from '@ton/crypto';
+import { loadCodeFrom } from '../wrappers/CodeUtils';
 
 /*
    These tests check compliance with the TEP-74 and TEP-89,
@@ -97,59 +98,8 @@ describe('JettonWallet', () => {
         confDict.set(-1024, beginCell().storeBuffer(jwallet_code_raw.hash(), 32).endCell());
         blockchain.setConfig(beginCell().storeDictDirect(confDict).endCell());
         // jwallet_code = new Cell({ exotic:true, bits: lib_prep.bits, refs:lib_prep.refs});
-        /*
-        * // Updatable and pausable wallet code
-        *"Asm.fif" include
-        *<{
-        *  DEPTH // Push number of elements on stack
-        *  c4 PUSH
-        *  c5 PUSH
-        *  c7 PUSH
-        *  // Fift stub
-        *	<{
-        *    2DROP // Clear catch args
-        *    2 PUSHINT
-        *    NEWC // constructor of library cell
-        *    8 STU // store 02 as library identifier to library cell constructor
-        *    -1024 PUSHINT CONFIGPARAM // X - is special index that is reserved for jetton code
-        *    DROP // Drop the status
-        *    CTOS // conver param to slice
-        *    256 PUSHINT PLDUX SWAP // load 256 hash of the library
-        *    256 STU // store hash to library cell constructor
-        *    1 PUSHINT ENDXC // finalize library cell
-        *    CTOS // open cell (it transparently replaced with actual code loaded via library mechanism)
-        *    BLESS // convert slice to continuation (executable code)
-        *    EXECUTE // start to execute
-        *    // Return false, so THROWIF won't throw
-        *    0 PUSHINT
-        *	}>CONT
-        *	
-        *   c7 SETCONT
-        *   c5 SETCONT
-        *   c4 SETCONT
-        *   SWAP
-        *   -1 PUSHINT
-        *   SETCONTVARARGS
-        *<{ 40849517356361055192946520621652234430928522388750971481005990576651272944379 PUSHINT // PAUSE_HASH
-        *      2 PUSHINT // store_uint lib prefix
-        *      NEWC // Start building cell
-        *      8 STU // lib prefix size
-        *      256 STU // Storing the hash
-        *      1 PUSHINT ENDXC // Close exotic
-        *      CTOS // Open should throw 9 in tot present
-        *      DROP // Drop slice
-        *      1 PUSHINT // Return true
-        *    }>CONT
-        *    c1 PUSH
-        *    COMPOSALT
-        *    SWAP
-        *    TRY
-        *    1000 THROWIF // Will throw if catch is not called
-        * }>c
-        */
 
-
-        jwallet_code = Cell.fromBase64("te6cckEBAQEAawAA0mjtRO1F7UeOHFtyyMsHgfwA+DIw0IEBANcDAcv/cc8j0O0e2HDtZ+1l7WQBf+0Rji6C8FpQAepO6shFRNLzyB2LzFSc4tPO98yF4vToUK84f3r7csjLB8v/cc8j0DBx7UHt8QHy//LT6EmPirY=");
+        jwallet_code = loadCodeFrom(await compile('Loader'));
 
         console.log("Code stats:", collectCellStats(jwallet_code, [], false));
 
