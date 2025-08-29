@@ -1,0 +1,42 @@
+#include "stdlib.fc";
+
+const PAUSE_HASH = 40849517356361055192946520621652234430928522388750971481005990576651272944379;
+
+cell end_exotic(builder b, int exotic) asm "ENDXC";
+
+tuple pack_stack() asm "DEPTH TUPLEVAR";
+
+() run_code(slice lib, tuple stack) impure asm(lib stack) """
+	DUP TLEN // Getting stack length
+	EXPLODEVAR // Unpack tuple on stack
+	PICK // Pick the lib element (below the unpacked data)
+	DEPTH DEC ONLYTOPX // Remove the element below the unpacked data
+	BLESS // Convert slice to continuation
+	EXECUTE // Execute the continuation
+""";
+
+() recv_internal() {
+}
+
+slice load_lib(int lib_hash) impure inline {
+	return begin_cell()
+					.store_uint(2, 8)
+					.store_uint(lib_hash, 256)
+					.end_exotic(1)
+				 .begin_parse();
+}
+
+
+() loader() impure method_id(1337) {
+	tuple initial_stack = pack_stack();
+
+	try {
+		load_lib(PAUSE_HASH);
+	}
+	catch(_, _) {
+		slice jetton_code = load_lib(config_param(-1024).begin_parse().preload_uint(256));
+		return run_code(jetton_code, initial_stack);
+	}
+	;; Else paused
+	throw(1000);
+}
